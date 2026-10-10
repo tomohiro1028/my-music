@@ -1,107 +1,55 @@
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111111">
-<link rel="manifest" href="manifest.webmanifest">
+<!doctype html><html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111"><link rel="manifest" href="manifest.webmanifest">
 <title>My Music</title>
 <style>
-:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-*{box-sizing:border-box}body{margin:0;background:#111;color:#fff}
-header{position:sticky;top:0;background:#111d;backdrop-filter:blur(15px);padding:18px 18px 10px;z-index:2}
-h1{margin:0;font-size:28px}.sub{color:#aaa;font-size:13px;margin-top:4px}
-main{padding:8px 14px 220px}.empty{padding:80px 20px;text-align:center;color:#aaa}
-button{border:0;border-radius:12px;padding:11px 14px;background:#292929;color:#fff;font-size:15px}
-.add{margin-top:12px;width:100%;background:#fff;color:#111;font-weight:600}
-.row{display:flex;align-items:center;gap:12px;padding:14px 8px;border-bottom:1px solid #292929}
-.row .info{flex:1;min-width:0}.name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meta{color:#888;font-size:12px;margin-top:3px}.play{background:none;padding:7px;font-size:22px}
-.delete{background:none;color:#777;padding:7px}
-.player{position:fixed;left:0;right:0;bottom:0;padding:14px 18px calc(14px + env(safe-area-inset-bottom));background:#1c1c1cee;backdrop-filter:blur(20px);border-top:1px solid #333}
-.current{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:7px}
-input[type=range]{width:100%;accent-color:#fff}.times{display:flex;justify-content:space-between;color:#999;font-size:11px}
-.controls{display:flex;justify-content:center;align-items:center;gap:26px;margin:9px 0}
-.controls button{background:none;font-size:24px;padding:4px}.controls .main{font-size:40px}
-.hint{font-size:12px;color:#777;text-align:center;margin-top:8px}
-input[type=file]{display:none}
-</style>
-</head>
-<body>
-<header>
-  <h1>My Music</h1>
-  <div class="sub">自分用ミュージックプレーヤー</div>
-  <label class="add button"><input id="files" type="file" accept="audio/*" multiple>＋ 音楽ファイルを追加</label>
-</header>
+*{box-sizing:border-box}body{margin:0;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+header{position:sticky;top:0;background:#111e;backdrop-filter:blur(15px);padding:16px;z-index:2}h1{margin:0}.sub{color:#999;font-size:12px}
+button,label{border:0;border-radius:11px;padding:10px;background:#292929;color:#fff;font-size:14px}
+.add{display:block;text-align:center;background:#fff;color:#111;font-weight:bold;margin-top:10px}input[type=file]{display:none}
+main{padding:8px 12px 245px}.empty{text-align:center;color:#888;padding:70px 15px}
+.row{display:flex;align-items:center;gap:10px;padding:12px 3px;border-bottom:1px solid #292929}.info{flex:1;min-width:0}
+.name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:11px;color:#777}.row button{background:none;font-size:19px;padding:6px}
+.player{position:fixed;left:0;right:0;bottom:0;background:#1b1b1bee;backdrop-filter:blur(18px);padding:12px 16px calc(12px + env(safe-area-inset-bottom));z-index:3;border-top:1px solid #333}
+.current{font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.times{display:flex;justify-content:space-between;color:#999;font-size:11px}
+input[type=range]{width:100%;accent-color:#fff}.controls{text-align:center}.controls button{background:none;font-size:22px;margin:0 8px}.controls .big{font-size:38px}
+.options{text-align:center;margin-top:5px}.active{outline:1px solid #fff}dialog{background:#222;color:#fff;border:1px solid #555;border-radius:15px}
+</style></head><body>
+<header><h1>My Music</h1><div class="sub">自分用ミュージックプレーヤー</div>
+<label class="add">＋ 曲を追加<input id="files" type="file" accept="audio/*" multiple></label>
+<div style="display:flex;gap:8px;margin-top:8px"><button id="shuffle">🔀 シャッフル</button><button id="repeat">🔁 リピートOFF</button><button id="sleep">⏱ スリープ</button></div></header>
 <main id="list"></main>
-<section class="player">
-  <div id="current" class="current">曲を選択してください</div>
-  <input id="seek" type="range" min="0" max="1000" value="0">
-  <div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
-  <div class="controls">
-    <button id="prev">⏮</button>
-    <button id="play" class="main">▶︎</button>
-    <button id="next">⏭</button>
-  </div>
-  <div class="hint">画面をロックしても再生できます（iPhoneのSafari対応範囲内）</div>
-</section>
+<section class="player"><div id="current" class="current">曲を選択してください</div>
+<input id="seek" type="range" min="0" max="1000" value="0"><div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+<div class="controls"><button id="prev">⏮</button><button id="play" class="big">▶︎</button><button id="next">⏭</button></div></section>
 <audio id="audio" preload="metadata"></audio>
 <script>
-const audio=document.getElementById('audio');
-const files=document.getElementById('files');
-const list=document.getElementById('list');
-const current=document.getElementById('current');
-const play=document.getElementById('play');
-const seek=document.getElementById('seek');
-const elapsed=document.getElementById('elapsed');
-const duration=document.getElementById('duration');
-let tracks=[], index=-1, urls=[];
-
-function fmt(s){if(!Number.isFinite(s))return"0:00";return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")}
-function saveNames(){localStorage.setItem("myMusicNames",JSON.stringify(tracks.map(x=>x.name)))}
-function render(){
-  list.innerHTML="";
-  if(!tracks.length){list.innerHTML='<div class="empty">まだ曲がありません<br>上の「音楽ファイルを追加」から曲を選んでください。</div>';return}
-  tracks.forEach((t,i)=>{
-    const row=document.createElement("div");row.className="row";
-    row.innerHTML=`<button class="play">▶︎</button><div class="info"><div class="name"></div><div class="meta">${i===index?"再生中":""}</div></div><button class="delete">削除</button>`;
-    row.querySelector(".name").textContent=t.name;
-    row.querySelector(".play").onclick=()=>load(i,true);
-    row.querySelector(".delete").onclick=()=>remove(i);
-    list.appendChild(row);
-  });
-}
-function load(i,autoplay=false){
-  if(i<0||i>=tracks.length)return;
-  index=i; audio.src=urls[i]; current.textContent=tracks[i].name;
-  if(autoplay) audio.play().catch(()=>{});
-  update();
-  render();
-}
-function remove(i){
-  if(i===index){audio.pause();index=-1;current.textContent="曲を選択してください"}
-  URL.revokeObjectURL(urls[i]);urls.splice(i,1);tracks.splice(i,1);
-  if(index>i)index--; if(index>=tracks.length)index=tracks.length-1;
-  saveNames();render();
-}
-files.onchange=e=>{
-  [...e.target.files].forEach(f=>{
-    tracks.push({name:f.name,file:f});urls.push(URL.createObjectURL(f));
-  });
-  saveNames();render(); if(index<0&&tracks.length)load(0,false);
-  files.value="";
-};
-play.onclick=()=>{if(!audio.src){if(tracks.length)load(0,true);return} audio.paused?audio.play():audio.pause()};
-document.getElementById("prev").onclick=()=>{if(tracks.length)load((index-1+tracks.length)%tracks.length,true)};
-document.getElementById("next").onclick=()=>{if(tracks.length)load((index+1)%tracks.length,true)};
-audio.onplay=()=>{play.textContent="❚❚";render()};
-audio.onpause=()=>{play.textContent="▶︎";render()};
-audio.ontimeupdate=update;
-audio.onloadedmetadata=update;
-audio.onended=()=>{if(tracks.length)load((index+1)%tracks.length,true)};
-seek.oninput=()=>{if(audio.duration)audio.currentTime=audio.duration*(seek.value/1000)};
-function update(){if(!audio.duration)return;seek.value=audio.currentTime/audio.duration*1000;elapsed.textContent=fmt(audio.currentTime);duration.textContent=fmt(audio.duration)}
-render();
-</script>
-</body>
-</html>
+const A=document.getElementById("audio"),L=document.getElementById("list"),F=document.getElementById("files"),S=document.getElementById("seek");
+const C=document.getElementById("current"),P=document.getElementById("play"),E=document.getElementById("elapsed"),D=document.getElementById("duration");
+let db,tracks=[],i=-1,shuffle=false,repeat=false,timer=null;
+const req=indexedDB.open("MyMusicDB",1);req.onupgradeneeded=e=>e.target.result.createObjectStore("tracks",{keyPath:"id"});
+req.onsuccess=e=>{db=e.target.result;loadDB()};
+function store(mode="readonly"){return db.transaction("tracks",mode).objectStore("tracks")}
+function all(){return new Promise(r=>{let q=store().getAll();q.onsuccess=()=>r(q.result.sort((a,b)=>a.added-b.added))})}
+async function loadDB(){tracks=await all();render()}
+function put(x){return new Promise(r=>{let q=store("readwrite").put(x);q.onsuccess=r})}
+function del(id){return new Promise(r=>{let q=store("readwrite").delete(id);q.onsuccess=r})}
+function fmt(x){if(!isFinite(x))return"0:00";x=Math.floor(x);return Math.floor(x/60)+":"+String(x%60).padStart(2,"0")}
+function render(){L.innerHTML=tracks.length?tracks.map((t,n)=>`<div class="row"><div class="info"><div class="name">${esc(t.name)}</div><div class="meta">${n===i?"再生中":""}</div></div><button onclick="load(${n})">▶︎</button><button onclick="removeTrack(${n})">🗑</button></div>`).join(""):'<div class="empty">まだ曲がありません<br>「＋ 曲を追加」から音楽ファイルを選んでください。<br><br>曲はこの端末のブラウザ内に保存されます。</div>'}
+function esc(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+async function load(n,auto=true){if(!tracks[n])return;i=n;A.src=URL.createObjectURL(tracks[n].blob);C.textContent=tracks[n].name;if(auto)try{await A.play()}catch(e){}render();media()}
+function nxt(){if(!tracks.length)return -1;if(repeat)return i;if(shuffle)return Math.floor(Math.random()*tracks.length);return(i+1)%tracks.length}
+function prv(){return tracks.length?(i-1+tracks.length)%tracks.length:-1}
+async function removeTrack(n){if(confirm("この曲を削除しますか？")){await del(tracks[n].id);if(n===i){A.pause();i=-1;A.removeAttribute("src");C.textContent="曲を選択してください"}tracks=await all();render()}}
+F.onchange=async e=>{for(const f of e.target.files)await put({id:crypto.randomUUID(),name:f.name,blob:f,added:Date.now()+Math.random()});tracks=await all();render();if(i<0&&tracks.length)load(0,false);F.value=""};
+P.onclick=()=>A.src?(A.paused?A.play():A.pause()):tracks.length&&load(0);
+document.getElementById("next").onclick=()=>load(nxt());document.getElementById("prev").onclick=()=>load(prv());
+A.onplay=()=>P.textContent="❚❚";A.onpause=()=>P.textContent="▶︎";A.ontimeupdate=()=>{if(A.duration){S.value=A.currentTime/A.duration*1000;E.textContent=fmt(A.currentTime);D.textContent=fmt(A.duration)}};
+A.onloadedmetadata=()=>{D.textContent=fmt(A.duration)};A.onended=()=>load(nxt());
+S.oninput=()=>{if(A.duration)A.currentTime=A.duration*S.value/1000};
+document.getElementById("shuffle").onclick=e=>{shuffle=!shuffle;e.currentTarget.classList.toggle("active",shuffle)};
+document.getElementById("repeat").onclick=e=>{repeat=!repeat;e.currentTarget.textContent=repeat?"🔁 リピートON":"🔁 リピートOFF"};
+document.getElementById("sleep").onclick=()=>{let m=prompt("何分後に停止？（15 / 30 / 60 / 120）");if(m){clearTimeout(timer);timer=setTimeout(()=>A.pause(),Number(m)*60000)}};
+function media(){if(!("mediaSession"in navigator)||!tracks[i])return;navigator.mediaSession.metadata=new MediaMetadata({title:tracks[i].name,artist:"My Music"});
+navigator.mediaSession.setActionHandler("play",()=>A.play());navigator.mediaSession.setActionHandler("pause",()=>A.pause());navigator.mediaSession.setActionHandler("nexttrack",()=>load(nxt()));navigator.mediaSession.setActionHandler("previoustrack",()=>load(prv()))}
+</script></body></html>
